@@ -10,7 +10,7 @@ Therefore, I have decided to take a far simpler approach; A single file with pro
 
 ## Credits
 
-The '__get_credentials' and '__get_data' functions where directly copied from https://github.com/marcelveldt/python-blueconnect and only slightly modified. Also, I figured out the correct REST calls to the Blue Connect web server from https://github.com/LordMike/MBW.Client.BlueRiiotApi.
+The `__get_credentials` and `__get_data` functions where directly copied from https://github.com/marcelveldt/python-blueconnect and only slightly modified. Also, I figured out the correct REST calls to the Blue Connect web server from https://github.com/LordMike/MBW.Client.BlueRiiotApi.
 
 ## Usage
 

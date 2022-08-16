@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The goal of this code is to query the temperature, pH, and chlorine levels from the Blueriiot Blue Connect pool sensor, and to update Domoticz (https://domoticz.com/) with the queried data.
+The goal of this code is to query the temperature, pH, and chlorine levels from the Blueriiot Blue Connect pool sensor (https://www.blueriiot.com/), and to update Domoticz (https://domoticz.com/) with the queried data.
 
 Marcel van der Veldt (@marcelveldt) already wrote a very elegant python library for communicating to the Blue Connect web server: https://github.com/marcelveldt/python-blueconnect. His library uses data classes to hold the sensor data and async calls, which is generally speaking a very nice design for many purposes. One pitfall with this design is that when the manufacturer of the sensor decides to change their JSON data model (which they may do at any given time as it is an internal api), the python code and the JSON model are out of sync, and the library does not work anymore. And exactly this seems to have happened at the time I checked out the library (August 2022). Of course it is possible to update the data models in the library, but this comes at some maintenance costs.
 

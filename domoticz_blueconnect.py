@@ -27,6 +27,7 @@
 import json
 import requests
 import time
+import hashlib
 from aws_request_signer import AwsRequestSigner
 
 
@@ -73,21 +74,36 @@ def __get_credentials() -> dict:
 def __get_data(endpoint: str) -> dict:
     """Get data from blueriiot"""
     url = BASE_URL + endpoint
-    headers = BASE_HEADERS.copy()
-    # sign the request
     creds = __get_credentials()
-    request_signer = AwsRequestSigner(
-        AWS_REGION, creds['access_key'], creds['secret_key'], 'execute-api'
-    )
-    headers.update(request_signer.sign_with_headers('GET', url, headers))
+    rs = AwsRequestSigner( #sign the request
+        AWS_REGION, creds['access_key'], creds['secret_key'], 'execute-api')
+    headers = BASE_HEADERS.copy()
     headers['X-Amz-Security-Token'] = creds['session_token']
+    headers.update(rs.sign_with_headers('GET', url, headers))
     with requests.get(url, headers=headers) as response:
         if response.status_code != 200:
             error_msg = response.text
             raise Exception(
                 f'Error while retrieving data for endpoint {endpoint}: {error_msg}'
             )
-    return __verbose(response.json()['data'])
+    return __verbose(response.json())
+
+def __post_data(endpoint: str, content: str) -> dict:
+    url = BASE_URL + endpoint
+    creds = __get_credentials()
+    rs = AwsRequestSigner( #sign the request
+        AWS_REGION, creds['access_key'], creds['secret_key'], 'execute-api')
+    headers = BASE_HEADERS.copy()
+    headers['X-Amz-Security-Token'] = creds['session_token']
+    content_hash = hashlib.sha256(content).hexdigest()
+    headers.update(rs.sign_with_headers('POST', url, headers, content_hash))
+    with requests.post(url, headers=headers, data=content) as response:
+        if response.status_code != 200:
+            error_msg = response.text
+            raise Exception(
+                f'Error while retrieving data for endpoint {endpoint}: {error_msg}'
+            )
+    return __verbose(response.json())
 
 def __find_entry(entries: dict, key: str, name: str) -> dict:
     if entries: #prevent trying to iterate when None is passed as entries
@@ -95,18 +111,21 @@ def __find_entry(entries: dict, key: str, name: str) -> dict:
             if entry[key] == name: return entry
     return None
 
-def __domoticz(cmd: str) -> str:
+def __domoticz(cmd: dict) -> str:
     url = _domoticz_host + "/json.htm"
     return __verbose(requests.get(url, params=cmd).json())
 
 def main() -> None:
     #user = __get_data(f'user')
-    pool = __get_data(f'swimming_pool')
+    pool = __get_data(f'swimming_pool')['data']
     pool_id = pool[0]['swimming_pool']['swimming_pool_id']
-    blue = __get_data(f'swimming_pool/' + pool_id + f'/blue')
+    blue = __get_data(f'swimming_pool/{pool_id}/blue')['data']
     blue_device_serial = blue[0]['blue_device_serial']
-    measurements = __get_data(f'swimming_pool/' + pool_id + f'/blue/' + 
-        blue_device_serial + f'/lastMeasurements')
+    #__get_data(f'blue/{blue_device_serial}')
+    __post_data(f'blue/{blue_device_serial}/releaseLastUnprocessedEvent', b'') #assure that the measurement is the most recent reading
+    time.sleep(3)  #wait for uploading most recent reading
+    measurements = __get_data(f'swimming_pool/{pool_id}/blue/' + 
+        f'{blue_device_serial}/lastMeasurements?mode=blue_and_strip')['data']
 
     timestamp = measurements[0]['timestamp']
     last_updated = __find_entry(__domoticz(

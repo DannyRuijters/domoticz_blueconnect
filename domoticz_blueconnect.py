@@ -123,7 +123,7 @@ def main() -> None:
     blue_device_serial = blue[0]['blue_device_serial']
     #__get_data(f'blue/{blue_device_serial}')
     __post_data(f'blue/{blue_device_serial}/releaseLastUnprocessedEvent', b'') #assure that the measurement is the most recent reading
-    time.sleep(3)  #wait for uploading most recent reading
+    time.sleep(15)  #wait for uploading most recent reading
     measurements = __get_data(f'swimming_pool/{pool_id}/blue/' + 
         f'{blue_device_serial}/lastMeasurements?mode=blue_and_strip')['data']
 
